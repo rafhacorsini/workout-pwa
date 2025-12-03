@@ -1,8 +1,4 @@
 {
-  "rewrites": [
-    {
-      "source": "/((?!src/|public/|sw.js|assets/|favicon.ico).*)",
-      "destination": "/index.html"
-    }
-  ]
+  "cleanUrls": true,
+  "trailingSlash": false
 }
