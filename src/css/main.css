@@ -1,0 +1,59 @@
+/* Main Layout */
+#app {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 120px;
+    /* Space for floating nav */
+    background-color: var(--bg-primary);
+}
+
+.container {
+    padding: var(--spacing-md);
+    max-width: 600px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* Header Date */
+.header-date {
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-bottom: var(--spacing-xs);
+}
+
+/* Section Headers */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-sm);
+    margin-top: var(--spacing-xl);
+    padding: 0 var(--spacing-xs);
+}
+
+/* Floating Action Button (FAB) */
+.fab {
+    position: fixed;
+    bottom: 100px;
+    /* Above nav bar */
+    right: 24px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background-color: var(--accent-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-md);
+    z-index: 90;
+    transition: transform 0.2s var(--ease-apple);
+}
+
+.fab:active {
+    transform: scale(0.9);
+}

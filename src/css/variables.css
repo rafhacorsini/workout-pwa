@@ -1,0 +1,70 @@
+:root {
+    /* Apple System Colors (Refined) */
+    --system-blue: #007AFF;
+    --system-green: #34C759;
+    --system-indigo: #5856D6;
+    --system-orange: #FF9500;
+    --system-pink: #FF2D55;
+    --system-purple: #AF52DE;
+    --system-red: #FF3B30;
+    --system-teal: #5AC8FA;
+    --system-yellow: #FFCC00;
+
+    /* Grays & Backgrounds (Light Mode) */
+    --bg-primary: #F2F2F7;
+    /* iOS Grouped Background */
+    --bg-card: #FFFFFF;
+    --bg-glass: rgba(255, 255, 255, 0.75);
+
+    /* Text */
+    --text-primary: #000000;
+    --text-secondary: #8E8E93;
+    --text-tertiary: #C7C7CC;
+    --text-on-accent: #FFFFFF;
+
+    /* Separators */
+    --separator: rgba(60, 60, 67, 0.29);
+    /* iOS Native Separator */
+
+    /* Accent */
+    --accent-color: var(--system-blue);
+
+    /* Spacing - More breathing room */
+    --spacing-xs: 6px;
+    --spacing-sm: 12px;
+    --spacing-md: 20px;
+    --spacing-lg: 32px;
+    --spacing-xl: 48px;
+
+    /* Radius - Squircles approximation */
+    --radius-sm: 10px;
+    --radius-md: 16px;
+    --radius-lg: 24px;
+    --radius-full: 9999px;
+
+    /* Shadows - Soft & Deep */
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.12);
+
+    /* Font Family */
+    --font-stack: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        /* Dark Mode Overrides */
+        --bg-primary: #000000;
+        --bg-card: #1C1C1E;
+        --bg-glass: rgba(30, 30, 30, 0.75);
+
+        --text-primary: #FFFFFF;
+        --text-secondary: #98989D;
+        --text-tertiary: #5A5A5E;
+
+        --separator: rgba(84, 84, 88, 0.5);
+
+        --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+        --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+}

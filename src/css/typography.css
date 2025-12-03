@@ -1,0 +1,98 @@
+/* Typography System */
+.text-large-title {
+    font-size: 34px;
+    font-weight: 700;
+    letter-spacing: 0.37px;
+    line-height: 41px;
+}
+
+.text-title-1 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 0.36px;
+    line-height: 34px;
+}
+
+.text-title-2 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.35px;
+    line-height: 28px;
+}
+
+.text-title-3 {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: 0.38px;
+    line-height: 25px;
+}
+
+.text-headline {
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.41px;
+    line-height: 22px;
+}
+
+.text-body {
+    font-size: 17px;
+    font-weight: 400;
+    letter-spacing: -0.41px;
+    line-height: 22px;
+}
+
+.text-callout {
+    font-size: 16px;
+    font-weight: 400;
+    letter-spacing: -0.32px;
+    line-height: 21px;
+}
+
+.text-subhead {
+    font-size: 15px;
+    font-weight: 400;
+    letter-spacing: -0.24px;
+    line-height: 20px;
+}
+
+.text-footnote {
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: -0.08px;
+    line-height: 18px;
+}
+
+.text-caption-1 {
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 0;
+    line-height: 16px;
+}
+
+.text-caption-2 {
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.07px;
+    line-height: 13px;
+}
+
+/* Utilities */
+.text-secondary {
+    color: var(--text-secondary);
+}
+
+.text-tertiary {
+    color: var(--text-tertiary);
+}
+
+.text-center {
+    text-align: center;
+}
+
+.font-bold {
+    font-weight: 700;
+}
+
+.font-semibold {
+    font-weight: 600;
+}
