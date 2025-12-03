@@ -1,14 +1,8 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "index.html",
-      "use": "@vercel/static"
-    }
-  ],
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/((?!src/|public/|sw.js|assets/).*)",
       "destination": "/index.html"
     }
   ],
