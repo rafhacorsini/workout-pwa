@@ -1,4 +1,4 @@
-import { config } from '../config.js';
+import { config } from '/src/js/config.js';
 
 export const getCoachAdvice = async (exerciseName, history, profile) => {
     if (!config.OPENAI_API_KEY) {

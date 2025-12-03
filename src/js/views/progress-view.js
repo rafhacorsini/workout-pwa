@@ -1,5 +1,5 @@
-import { getAll } from '../core/db.js';
-import { formatDate } from '../core/utils.js';
+import { getAll } from '/src/js/core/db.js';
+import { formatDate } from '/src/js/core/utils.js';
 
 export const ProgressView = async () => {
     const container = document.createElement('div');

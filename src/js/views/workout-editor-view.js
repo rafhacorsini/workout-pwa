@@ -1,6 +1,6 @@
-import { getById, put, add, remove } from '../core/db.js';
-import { navigate } from '../core/router.js';
-import { generateId } from '../core/utils.js';
+import { getById, put, add, remove } from '/src/js/core/db.js';
+import { navigate } from '/src/js/core/router.js';
+import { generateId } from '/src/js/core/utils.js';
 
 export const WorkoutEditorView = async (params) => {
     const container = document.createElement('div');

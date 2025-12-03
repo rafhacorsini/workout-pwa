@@ -1,6 +1,6 @@
-import { getAll, put, getById } from '../core/db.js';
-import { navigate } from '../core/router.js';
-import { formatDate, calculateStreak } from '../core/utils.js';
+import { getAll, put, getById } from '/src/js/core/db.js';
+import { navigate } from '/src/js/core/router.js';
+import { formatDate, calculateStreak } from '/src/js/core/utils.js';
 
 export const HomeView = async () => {
     const container = document.createElement('div');

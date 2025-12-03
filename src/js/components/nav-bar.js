@@ -1,4 +1,4 @@
-import { navigate } from '../core/router.js';
+import { navigate } from '/src/js/core/router.js';
 
 export const NavBar = () => {
     const nav = document.createElement('nav');

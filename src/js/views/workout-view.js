@@ -1,7 +1,7 @@
-import { getById, add, getAll, put } from '../core/db.js';
-import { navigate } from '../core/router.js';
-import { formatTime, generateId, formatDate } from '../core/utils.js';
-import { getCoachAdvice, analyzeWorkout } from '../services/ai.js';
+import { getById, add, getAll, put } from '/src/js/core/db.js';
+import { navigate } from '/src/js/core/router.js';
+import { formatTime, generateId, formatDate } from '/src/js/core/utils.js';
+import { getCoachAdvice, analyzeWorkout } from '/src/js/services/ai.js';
 
 export const WorkoutView = async (workoutId) => {
     const container = document.createElement('div');

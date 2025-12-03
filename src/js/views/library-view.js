@@ -1,5 +1,5 @@
-import { getAll } from '../core/db.js';
-import { navigate } from '../core/router.js';
+import { getAll } from '/src/js/core/db.js';
+import { navigate } from '/src/js/core/router.js';
 
 export const LibraryView = async () => {
     const container = document.createElement('div');
