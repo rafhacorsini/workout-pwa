@@ -1,10 +1,13 @@
 /* Main Layout */
 #app {
     min-height: 100vh;
+    min-height: 100dvh;
+    /* Mobile viewport fix */
     display: flex;
     flex-direction: column;
-    padding-bottom: 120px;
-    /* Space for floating nav */
+    padding-bottom: calc(120px + env(safe-area-inset-bottom));
+    padding-top: env(safe-area-inset-top);
+    /* Notch fix */
     background-color: var(--bg-primary);
 }
 
@@ -38,7 +41,7 @@
 /* Floating Action Button (FAB) */
 .fab {
     position: fixed;
-    bottom: 100px;
+    bottom: calc(100px + env(safe-area-inset-bottom));
     /* Above nav bar */
     right: 24px;
     width: 56px;
