@@ -1,11 +1,5 @@
 {
     "name": "workout-pwa",
     "version": "1.0.0",
-    "scripts": {
-        "start": "serve ."
-    },
-    "dependencies": {
-        "serve": "^14.0.0",
-        "lucide": "^0.468.0"
-    }
+    "private": true
 }
