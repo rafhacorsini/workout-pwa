@@ -41,7 +41,7 @@
 /* Floating Action Button (FAB) */
 .fab {
     position: fixed;
-    bottom: calc(100px + env(safe-area-inset-bottom));
+    bottom: calc(116px + env(safe-area-inset-bottom));
     /* Above nav bar */
     right: 24px;
     width: 56px;
