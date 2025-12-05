@@ -1,30 +1,24 @@
 // Config with environment support
 // Priority: env.js (local dev) > localStorage > empty
 
-let _apiKey = null;
+let _apiKey = '';
 
-const loadApiKey = async () => {
-    if (_apiKey !== null) return _apiKey;
-
+// Try to load from env.js (local dev only)
+// Using dynamic import with catch to avoid blocking on 404
+(async () => {
     try {
         const { ENV } = await import('/src/js/env.js');
-        _apiKey = ENV.OPENAI_API_KEY || '';
+        _apiKey = ENV?.OPENAI_API_KEY || '';
     } catch (e) {
-        // env.js doesn't exist in production
-        _apiKey = '';
+        // env.js doesn't exist in production - that's expected
+        console.log('Running in production mode (no local env.js)');
     }
-    return _apiKey;
-};
-
-// Eagerly try to load
-loadApiKey();
+})();
 
 export const config = {
     get OPENAI_API_KEY() {
-        // Return cached key or fallback to localStorage
         return _apiKey || localStorage.getItem('openai_api_key') || '';
     }
 };
 
-// For async contexts that need guaranteed key
-export const getApiKey = loadApiKey;
+export const getApiKey = () => _apiKey || localStorage.getItem('openai_api_key') || '';
