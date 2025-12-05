@@ -93,3 +93,54 @@ export const calculateStreak = (logs) => {
 
     return streak;
 };
+
+// Nutrition Helpers
+export const calculateTDEE = (weight, height, age, gender, activityLevel) => {
+    // Mifflin-St Jeor Equation
+    let bmr = (10 * weight) + (6.25 * height) - (5 * age);
+    if (gender === 'male') {
+        bmr += 5;
+    } else {
+        bmr -= 161;
+    }
+
+    const multipliers = {
+        'sedentary': 1.2,
+        'light': 1.375,
+        'moderate': 1.55,
+        'active': 1.725,
+        'athlete': 1.9
+    };
+
+    return Math.round(bmr * (multipliers[activityLevel] || 1.2));
+};
+
+export const calculateMacros = (tdee, goal, weight) => {
+    let targetCalories = tdee;
+    let proteinPerKg = 2.0;
+    let fatPerKg = 0.9;
+
+    if (goal === 'hypertrophy') {
+        targetCalories += 400; // Surplus
+        proteinPerKg = 2.0;
+    } else if (goal === 'weight_loss') {
+        targetCalories -= 500; // Deficit
+        proteinPerKg = 2.2; // Higher protein to spare muscle
+    }
+
+    const proteinGrams = Math.round(weight * proteinPerKg);
+    const fatGrams = Math.round(weight * fatPerKg);
+
+    // Remaining calories for carbs (Protein = 4kcal/g, Fat = 9kcal/g)
+    const proteinCals = proteinGrams * 4;
+    const fatCals = fatGrams * 9;
+    const remainingCals = targetCalories - proteinCals - fatCals;
+    const carbGrams = Math.max(0, Math.round(remainingCals / 4));
+
+    return {
+        calories: targetCalories,
+        protein: proteinGrams,
+        carbs: carbGrams,
+        fats: fatGrams
+    };
+};

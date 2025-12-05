@@ -9,6 +9,7 @@ export const NavBar = () => {
     const links = [
         { label: 'Hoje', icon: 'calendar', path: '/' },
         { label: 'Treinos', icon: 'dumbbell', path: '/library' },
+        { label: 'Nutrição', icon: 'apple', path: '/nutrition' },
         { label: 'Progresso', icon: 'bar-chart-2', path: '/progress' }
     ];
 

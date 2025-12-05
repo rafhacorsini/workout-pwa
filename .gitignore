@@ -1,7 +1,13 @@
+# Dependencies
 node_modules/
-.DS_Store
-*.log
-.vscode/
+
+# Environment (API Keys - NEVER COMMIT)
+.env
+src/js/env.js
+
+# Build output
+dist/
+.cache/
 .idea/
 dist/
 build/

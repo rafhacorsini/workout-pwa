@@ -1,6 +1,7 @@
 import { getAll, put, getById } from '/src/js/core/db.js';
 import { navigate } from '/src/js/core/router.js';
 import { formatDate, calculateStreak } from '/src/js/core/utils.js';
+import { config } from '/src/js/config.js';
 
 export const HomeView = async () => {
     const container = document.createElement('div');
@@ -28,6 +29,36 @@ export const HomeView = async () => {
         </div>
     `;
     container.appendChild(header);
+
+    // API Key Check (Localhost only)
+    if (!config.OPENAI_API_KEY && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+        const keyCard = document.createElement('div');
+        keyCard.className = 'card';
+        keyCard.style.border = '1px solid var(--system-red)';
+        keyCard.innerHTML = `
+            <h3 class="text-headline" style="color: var(--system-red); margin-bottom: 8px;">⚠️ Configuração Necessária</h3>
+            <p class="text-body text-secondary" style="margin-bottom: 12px;">Para usar a IA localmente, insira sua API Key da OpenAI.</p>
+            <input type="password" id="api-key-input" class="input-field" placeholder="sk-..." style="margin-bottom: 8px;">
+            <button id="save-key-btn" class="btn btn-primary">Salvar Key</button>
+        `;
+        container.appendChild(keyCard);
+
+        setTimeout(() => {
+            const btn = document.getElementById('save-key-btn');
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    const key = document.getElementById('api-key-input').value;
+                    if (key.startsWith('sk-')) {
+                        localStorage.setItem('openai_api_key', key);
+                        alert('Key salva! Recarregando...');
+                        window.location.reload();
+                    } else {
+                        alert('Key inválida. Deve começar com "sk-"');
+                    }
+                });
+            }
+        }, 0);
+    }
 
     // Gamification Card (Weekly Goal)
     const logs = await getAll('logs');
@@ -89,7 +120,7 @@ export const HomeView = async () => {
     }
 
     const goalMap = {
-        'hypertrophy': { icon: 'bicep-flexed', label: 'Hipertrofia', color: 'var(--system-blue)' },
+        'hypertrophy': { icon: 'biceps-flexed', label: 'Hipertrofia', color: 'var(--system-blue)' },
         'strength': { icon: 'dumbbell', label: 'Força Pura', color: 'var(--system-red)' },
         'endurance': { icon: 'activity', label: 'Resistência', color: 'var(--system-green)' },
         'weight_loss': { icon: 'flame', label: 'Perda de Peso', color: 'var(--system-orange)' }

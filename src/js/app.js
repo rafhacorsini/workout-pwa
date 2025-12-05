@@ -6,6 +6,7 @@ import { initDB } from '/src/js/core/db.js';
 import { initRouter, registerRoute } from '/src/js/core/router.js';
 import { HomeView } from '/src/js/views/home-view.js';
 import { LibraryView } from '/src/js/views/library-view.js';
+import { NutritionView } from '/src/js/views/nutrition-view.js';
 import { NavBar } from '/src/js/components/nav-bar.js';
 
 // Initialize App
@@ -20,6 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // 2. Initialize Router
         registerRoute('/', HomeView);
         registerRoute('/library', LibraryView);
+        registerRoute('/nutrition', NutritionView);
 
         // Dynamic Route for Workout
         registerRoute('/workout/new', async () => {

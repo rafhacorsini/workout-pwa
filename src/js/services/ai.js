@@ -114,3 +114,53 @@ export const analyzeWorkout = async (log, profile) => {
         return null;
     }
 };
+
+export const parseMeal = async (mealText) => {
+    const apiKey = config.OPENAI_API_KEY;
+    console.log('API Key check:', apiKey ? 'Key exists (length: ' + apiKey.length + ')' : 'NO KEY');
+
+    if (!apiKey) {
+        console.error('No API Key configured. Check localStorage.getItem("openai_api_key")');
+        return null;
+    }
+
+    const prompt = `
+        Analise esta refeição: "${mealText}".
+        
+        Estime os macronutrientes com base em porções padrão brasileiras.
+        Retorne APENAS um JSON válido:
+        {
+            "calories": 0,
+            "protein": 0,
+            "carbs": 0,
+            "fats": 0,
+            "foods": ["lista", "dos", "alimentos", "identificados"]
+        }
+    `;
+
+    try {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${config.OPENAI_API_KEY}`
+            },
+            body: JSON.stringify({
+                model: "gpt-4o-mini",
+                messages: [{ role: "user", content: prompt }],
+                max_tokens: 150,
+                response_format: { type: "json_object" }
+            })
+        });
+
+        const data = await response.json();
+        if (data.error) {
+            console.error('OpenAI Error:', data.error);
+            return null;
+        }
+        return JSON.parse(data.choices[0].message.content);
+    } catch (error) {
+        console.error('AI Meal Parse Error:', error);
+        return null;
+    }
+};

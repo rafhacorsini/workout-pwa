@@ -3,7 +3,7 @@
  */
 
 const DB_NAME = 'WorkoutAppDB';
-const DB_VERSION = 2; // Incremented version
+const DB_VERSION = 3; // Incremented for nutrition_logs
 
 let db = null;
 
@@ -53,6 +53,12 @@ const createObjectStores = (db) => {
     // Profile Store (New in v2)
     if (!db.objectStoreNames.contains('profile')) {
         db.createObjectStore('profile', { keyPath: 'id' });
+    }
+
+    // Nutrition Logs Store (New in v3)
+    if (!db.objectStoreNames.contains('nutrition_logs')) {
+        const nutritionStore = db.createObjectStore('nutrition_logs', { keyPath: 'id' });
+        nutritionStore.createIndex('date', 'date', { unique: false });
     }
 };
 
@@ -123,12 +129,12 @@ const seedInitialData = (transaction) => {
             // We can't easily check count in onupgradeneeded transaction for seeding without async, 
             // but since this runs on version upgrade, we can try to add. 
             // If key exists, it will error but we catch it or ignore.
-            // Better strategy: Use put (upsert) to ensure data exists.
+            // Better strategy: Use add (insert only) to ensure we don't overwrite user changes.
             items.forEach(item => {
                 try {
-                    store.put(item);
+                    store.add(item);
                 } catch (e) {
-                    // Ignore constraint errors if any
+                    // Ignore constraint errors (item already exists)
                 }
             });
         } catch (e) {

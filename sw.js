@@ -41,8 +41,13 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+    // Skip external requests (like API calls)
+    if (!event.request.url.startsWith(self.location.origin)) {
+        return;
+    }
+
     event.respondWith(
-        fetch(event.request).catch(() => caches.match(event.request))
-        // Network first, then cache (better for development)
+        fetch(event.request)
+            .catch(() => caches.match(event.request))
     );
 });
