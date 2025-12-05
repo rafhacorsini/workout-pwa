@@ -24,15 +24,24 @@ const handleRoute = async (path) => {
     let route = null;
     let params = {};
 
+    // Separate path and query string
+    const [cleanPath, queryString] = path.split('?');
+
     for (const r of routes) {
-        match = path.match(r.path);
+        match = cleanPath.match(r.path);
         if (match) {
             route = r;
             // Extract params if any
-            // This is a simple implementation, assumes order matches
-            // Ideally we'd map param names, but for now we just pass the ID as first arg if present
             if (match.length > 1) {
                 params = { id: match[1] };
+            }
+
+            // Parse query params
+            if (queryString) {
+                const urlParams = new URLSearchParams(queryString);
+                for (const [key, value] of urlParams) {
+                    params[key] = value;
+                }
             }
             break;
         }

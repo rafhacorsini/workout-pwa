@@ -1,18 +1,41 @@
-import { getAll, put, getById, add } from '/src/js/core/db.js';
+import { getAll, put, getById, add, remove } from '/src/js/core/db.js';
 import { calculateTDEE, calculateMacros, generateId } from '/src/js/core/utils.js';
 import { navigate } from '/src/js/core/router.js';
 
-export const NutritionView = async () => {
+export const NutritionView = async (params) => {
     const container = document.createElement('div');
     container.className = 'container fade-in';
     container.style.paddingBottom = '100px';
 
-    // Header
+    // Handle Date Selection
+    const today = new Date();
+    let selectedDate = today;
+
+    if (params && params.date) {
+        selectedDate = new Date(params.date);
+    }
+
+    // Helper for date navigation
+    const changeDate = (days) => {
+        const newDate = new Date(selectedDate);
+        newDate.setDate(newDate.getDate() + days);
+        navigate(`/nutrition?date=${newDate.toISOString().split('T')[0]}`);
+    };
+
+    // Header with Date Navigation
     const header = document.createElement('header');
     header.style.marginBottom = 'var(--spacing-lg)';
     header.innerHTML = `
-        <h1 class="text-title-1">Nutrição & Dieta</h1>
-        <p class="text-body text-secondary">Seu combustível para o treino.</p>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <h1 class="text-title-1">Nutrição</h1>
+            <button id="today-btn" class="btn-text" style="font-size: 14px; color: var(--accent-color);">Hoje</button>
+        </div>
+        
+        <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.05); padding: 8px 12px; border-radius: 12px;">
+            <button id="prev-day" class="btn-icon" style="width: 32px; height: 32px;"><i data-lucide="chevron-left"></i></button>
+            <span class="text-body" style="font-weight: 600;">${selectedDate.toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' })}</span>
+            <button id="next-day" class="btn-icon" style="width: 32px; height: 32px;"><i data-lucide="chevron-right"></i></button>
+        </div>
     `;
     container.appendChild(header);
 
@@ -26,11 +49,16 @@ export const NutritionView = async () => {
     if (!profile.weight || !profile.height || !profile.age) {
         renderSetupForm(container, profile);
     } else {
-        await renderDashboard(container, profile);
+        await renderDashboard(container, profile, selectedDate);
     }
 
+    // Navigation Events
     setTimeout(() => {
         if (window.lucide) window.lucide.createIcons();
+
+        document.getElementById('prev-day')?.addEventListener('click', () => changeDate(-1));
+        document.getElementById('next-day')?.addEventListener('click', () => changeDate(1));
+        document.getElementById('today-btn')?.addEventListener('click', () => navigate('/nutrition'));
     }, 0);
 
     return container;
@@ -104,23 +132,23 @@ const renderSetupForm = (container, profile) => {
     }, 0);
 };
 
-const renderDashboard = async (container, profile) => {
+const renderDashboard = async (container, profile, selectedDate) => {
     // Calculate Target Macros
     const tdee = calculateTDEE(profile.weight, profile.height, profile.age, profile.gender, profile.activity);
     const macros = calculateMacros(tdee, profile.goal, profile.weight);
 
-    // Get Today's Meals
-    const today = new Date().toDateString();
+    // Get Meals for Selected Date
+    const dateString = selectedDate.toDateString();
     let allMeals = [];
     try {
         allMeals = await getAll('nutrition_logs');
     } catch (e) {
         console.log('nutrition_logs store may not exist yet');
     }
-    const todayMeals = allMeals.filter(m => new Date(m.date).toDateString() === today);
+    const dayMeals = allMeals.filter(m => new Date(m.date).toDateString() === dateString);
 
-    // Calculate Today's Totals
-    const totals = todayMeals.reduce((acc, meal) => {
+    // Calculate Totals
+    const totals = dayMeals.reduce((acc, meal) => {
         acc.calories += meal.calories || 0;
         acc.protein += meal.protein || 0;
         acc.carbs += meal.carbs || 0;
@@ -141,7 +169,7 @@ const renderDashboard = async (container, profile) => {
     progressCard.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <div>
-                <div class="text-caption-1 text-secondary">Progresso de Hoje</div>
+                <div class="text-caption-1 text-secondary">Consumo Diário</div>
                 <div class="text-title-1" style="color: white;">${totals.calories} <span class="text-body" style="color: var(--text-secondary);">/ ${macros.calories} kcal</span></div>
             </div>
             ${renderProgressRing(calPercent, 'var(--system-blue)', 28)}
@@ -164,57 +192,73 @@ const renderDashboard = async (container, profile) => {
     `;
     container.appendChild(progressCard);
 
-    // AI Meal Logger
-    const loggerCard = document.createElement('div');
-    loggerCard.className = 'card';
-    loggerCard.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-            <div style="width: 40px; height: 40px; background: rgba(10, 132, 255, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                <i data-lucide="sparkles" style="color: var(--system-blue); width: 20px;"></i>
-            </div>
-            <h3 class="text-headline">Registrar Refeição (IA)</h3>
-        </div>
-        <p class="text-body text-secondary" style="margin-bottom: 16px;">Descreva o que você comeu e a IA calcula os macros.</p>
-        <div style="display: flex; gap: 8px;">
-            <input type="text" id="meal-input" class="input-field" placeholder="Ex: 3 ovos mexidos e café...">
-            <button id="log-meal-btn" class="btn-icon" style="background: var(--accent-color); color: white; border-radius: 12px; width: 54px;">
-                <i data-lucide="send"></i>
-            </button>
-        </div>
-    `;
-    container.appendChild(loggerCard);
+    // AI Meal Logger (Only show if viewing Today)
+    const isToday = selectedDate.toDateString() === new Date().toDateString();
 
-    // Today's Meals List
-    if (todayMeals.length > 0) {
+    if (isToday) {
+        const loggerCard = document.createElement('div');
+        loggerCard.className = 'card';
+        loggerCard.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                <div style="width: 40px; height: 40px; background: rgba(10, 132, 255, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                    <i data-lucide="sparkles" style="color: var(--system-blue); width: 20px;"></i>
+                </div>
+                <h3 class="text-headline">Registrar Refeição (IA)</h3>
+            </div>
+            <p class="text-body text-secondary" style="margin-bottom: 16px;">Descreva o que você comeu e a IA calcula os macros.</p>
+            <div style="display: flex; gap: 8px;">
+                <input type="text" id="meal-input" class="input-field" placeholder="Ex: 3 ovos mexidos e café...">
+                <button id="log-meal-btn" class="btn-icon" style="background: var(--accent-color); color: white; border-radius: 12px; width: 54px;">
+                    <i data-lucide="send"></i>
+                </button>
+            </div>
+        `;
+        container.appendChild(loggerCard);
+    }
+
+    // Meals List
+    if (dayMeals.length > 0) {
         const mealsTitle = document.createElement('h3');
         mealsTitle.className = 'text-headline';
         mealsTitle.style.margin = '24px 0 12px';
-        mealsTitle.textContent = 'Refeições de Hoje';
+        mealsTitle.textContent = 'Refeições';
         container.appendChild(mealsTitle);
 
-        todayMeals.forEach(meal => {
+        dayMeals.forEach(meal => {
             const mealCard = document.createElement('div');
             mealCard.className = 'card';
             mealCard.style.marginBottom = '12px';
             mealCard.style.padding = '16px';
             mealCard.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div>
+                    <div style="flex: 1;">
                         <div class="text-body" style="margin-bottom: 4px;">${meal.foods?.join(', ') || meal.description}</div>
                         <div class="text-caption-1 text-secondary">${new Date(meal.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</div>
                     </div>
-                    <div style="text-align: right;">
+                    <div style="text-align: right; margin-right: 12px;">
                         <div class="text-headline" style="color: var(--system-blue);">${meal.calories} kcal</div>
                         <div class="text-caption-2 text-secondary">P: ${meal.protein}g | C: ${meal.carbs}g | G: ${meal.fats}g</div>
                     </div>
+                    <button class="btn-icon delete-meal-btn" data-id="${meal.id}" style="width: 32px; height: 32px; background: rgba(255, 69, 58, 0.1); color: var(--system-red);">
+                        <i data-lucide="trash-2" style="width: 16px;"></i>
+                    </button>
                 </div>
             `;
             container.appendChild(mealCard);
         });
+    } else {
+        const emptyState = document.createElement('div');
+        emptyState.style.textAlign = 'center';
+        emptyState.style.padding = '40px 0';
+        emptyState.innerHTML = `
+            <p class="text-body text-secondary">Nenhuma refeição registrada neste dia.</p>
+        `;
+        container.appendChild(emptyState);
     }
 
-    // Meal Logger Logic
+    // Event Listeners
     setTimeout(() => {
+        // Log Meal
         const btn = document.getElementById('log-meal-btn');
         const input = document.getElementById('meal-input');
 
@@ -223,7 +267,6 @@ const renderDashboard = async (container, profile) => {
                 const text = input.value;
                 if (!text) return;
 
-                // Visual Loading State
                 const originalIcon = btn.innerHTML;
                 btn.innerHTML = `<div class="spinner" style="width: 20px; height: 20px; border: 2px solid white; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>`;
 
@@ -232,7 +275,6 @@ const renderDashboard = async (container, profile) => {
                     const result = await aiModule.parseMeal(text);
 
                     if (result) {
-                        // Save to DB
                         const mealLog = {
                             id: generateId(),
                             date: new Date().toISOString(),
@@ -245,8 +287,6 @@ const renderDashboard = async (container, profile) => {
                         };
                         await add('nutrition_logs', mealLog);
                         input.value = '';
-
-                        // Reload view to show updated totals
                         navigate('/nutrition');
                     } else {
                         alert('Erro ao analisar refeição. Verifique sua API Key.');
@@ -260,6 +300,20 @@ const renderDashboard = async (container, profile) => {
                 }
             });
         }
+
+        // Delete Meal
+        document.querySelectorAll('.delete-meal-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const id = e.currentTarget.dataset.id;
+                if (confirm('Tem certeza que deseja excluir esta refeição?')) {
+                    await remove('nutrition_logs', id);
+                    // Refresh current view preserving date
+                    const currentUrl = window.location.hash.slice(1) || '/nutrition';
+                    navigate(currentUrl);
+                }
+            });
+        });
+
     }, 0);
 };
 
