@@ -59,6 +59,7 @@ export default async function handler(req, res) {
                 }
             `;
             messages = [{ role: 'user', content: prompt }];
+
         } else if (action === 'analyzeShape') {
             messages = [
                 {
@@ -87,36 +88,35 @@ export default async function handler(req, res) {
                     ]
                 }
             ];
+        } else {
+            return res.status(400).json({ error: 'Unknown action' });
         }
-    } else {
-        return res.status(400).json({ error: 'Unknown action' });
+
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                model: 'gpt-4o-mini',
+                messages: messages,
+                max_tokens: 300,
+                response_format: { type: 'json_object' }
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.error) {
+            return res.status(500).json({ error: result.error.message });
+        }
+
+        const content = JSON.parse(result.choices[0].message.content);
+        return res.status(200).json(content);
+
+    } catch (error) {
+        console.error('AI API Error:', error);
+        return res.status(500).json({ error: 'Failed to process AI request' });
     }
-
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-            model: 'gpt-4o-mini',
-            messages: messages,
-            max_tokens: 300,
-            response_format: { type: 'json_object' }
-        })
-    });
-
-    const result = await response.json();
-
-    if (result.error) {
-        return res.status(500).json({ error: result.error.message });
-    }
-
-    const content = JSON.parse(result.choices[0].message.content);
-    return res.status(200).json(content);
-
-} catch (error) {
-    console.error('AI API Error:', error);
-    return res.status(500).json({ error: 'Failed to process AI request' });
-}
 }
