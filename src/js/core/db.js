@@ -3,7 +3,7 @@
  */
 
 const DB_NAME = 'WorkoutAppDB';
-const DB_VERSION = 3; // Incremented for nutrition_logs
+const DB_VERSION = 4; // Incremented for Turbo features
 
 let db = null;
 
@@ -26,7 +26,11 @@ export const initDB = () => {
             const transaction = request.transaction;
 
             createObjectStores(db);
-            seedInitialData(transaction);
+            try {
+                seedInitialData(transaction);
+            } catch (e) {
+                console.warn('Seeding failed, but continuing upgrade:', e);
+            }
         };
     });
 };
@@ -59,6 +63,23 @@ const createObjectStores = (db) => {
     if (!db.objectStoreNames.contains('nutrition_logs')) {
         const nutritionStore = db.createObjectStore('nutrition_logs', { keyPath: 'id' });
         nutritionStore.createIndex('date', 'date', { unique: false });
+    }
+
+    // Daily Stats (Water) - New in v4
+    if (!db.objectStoreNames.contains('daily_stats')) {
+        db.createObjectStore('daily_stats', { keyPath: 'date' });
+    }
+
+    // Weight History - New in v4
+    if (!db.objectStoreNames.contains('weight_history')) {
+        const weightStore = db.createObjectStore('weight_history', { keyPath: 'id' });
+        weightStore.createIndex('date', 'date', { unique: false });
+    }
+
+    // Photos - New in v4
+    if (!db.objectStoreNames.contains('photos')) {
+        const photoStore = db.createObjectStore('photos', { keyPath: 'id' });
+        photoStore.createIndex('date', 'date', { unique: false });
     }
 };
 
@@ -126,16 +147,13 @@ const seedInitialData = (transaction) => {
     const safeAdd = (storeName, items) => {
         try {
             const store = transaction.objectStore(storeName);
-            // We can't easily check count in onupgradeneeded transaction for seeding without async, 
-            // but since this runs on version upgrade, we can try to add. 
-            // If key exists, it will error but we catch it or ignore.
-            // Better strategy: Use add (insert only) to ensure we don't overwrite user changes.
             items.forEach(item => {
-                try {
-                    store.add(item);
-                } catch (e) {
-                    // Ignore constraint errors (item already exists)
-                }
+                const request = store.add(item);
+                request.onerror = (event) => {
+                    // Prevent transaction from aborting on constraint error (duplicate key)
+                    event.preventDefault();
+                    event.stopPropagation();
+                };
             });
         } catch (e) {
             console.warn(`Store ${storeName} not available for seeding`, e);

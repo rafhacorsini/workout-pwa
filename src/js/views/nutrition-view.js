@@ -124,6 +124,19 @@ const renderSetupForm = (container, profile) => {
                 profile.activity = activity;
 
                 await put('profile', profile);
+
+                // Save to Weight History (Turbo Feature)
+                try {
+                    const weightLog = {
+                        id: generateId(),
+                        date: new Date().toISOString(),
+                        weight: weight
+                    };
+                    await add('weight_history', weightLog);
+                } catch (e) {
+                    console.log('Error saving weight history', e);
+                }
+
                 navigate('/nutrition'); // Reload view
             } else {
                 alert('Por favor, preencha todos os campos.');
@@ -192,6 +205,48 @@ const renderDashboard = async (container, profile, selectedDate) => {
     `;
     container.appendChild(progressCard);
 
+    // Water Tracker
+    let waterIntake = 0;
+    try {
+        const dailyStats = await getById('daily_stats', dateString);
+        if (dailyStats) {
+            waterIntake = dailyStats.water || 0;
+        }
+    } catch (e) {
+        // Store might not exist yet
+    }
+
+    const waterCard = document.createElement('div');
+    waterCard.className = 'card';
+    waterCard.style.background = 'linear-gradient(135deg, #0a84ff 0%, #0056b3 100%)';
+    waterCard.style.color = 'white';
+    waterCard.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <i data-lucide="droplet" style="fill: white;"></i>
+                <h3 class="text-headline" style="color: white;">Hidratação</h3>
+            </div>
+            <div class="text-title-1" style="color: white;">${(waterIntake / 1000).toFixed(1)}L</div>
+        </div>
+        
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <button id="remove-water" class="btn-icon" style="background: rgba(255,255,255,0.2); color: white; width: 40px; height: 40px;">
+                <i data-lucide="minus"></i>
+            </button>
+            
+            <div style="display: flex; gap: 4px;">
+                ${Array(8).fill(0).map((_, i) => `
+                    <div style="width: 8px; height: 24px; border-radius: 4px; background: ${i < (waterIntake / 250) ? 'white' : 'rgba(255,255,255,0.3)'};"></div>
+                `).join('')}
+            </div>
+
+            <button id="add-water" class="btn-icon" style="background: white; color: var(--system-blue); width: 40px; height: 40px;">
+                <i data-lucide="plus"></i>
+            </button>
+        </div>
+    `;
+    container.appendChild(waterCard);
+
     // AI Meal Logger (Only show if viewing Today)
     const isToday = selectedDate.toDateString() === new Date().toDateString();
 
@@ -258,6 +313,18 @@ const renderDashboard = async (container, profile, selectedDate) => {
 
     // Event Listeners
     setTimeout(() => {
+        // Water Logic
+        const updateWater = async (amount) => {
+            const newAmount = Math.max(0, waterIntake + amount);
+            await put('daily_stats', { date: dateString, water: newAmount });
+            // Refresh view
+            const currentUrl = window.location.hash.slice(1) || '/nutrition';
+            navigate(currentUrl);
+        };
+
+        document.getElementById('add-water')?.addEventListener('click', () => updateWater(250));
+        document.getElementById('remove-water')?.addEventListener('click', () => updateWater(-250));
+
         // Log Meal
         const btn = document.getElementById('log-meal-btn');
         const input = document.getElementById('meal-input');

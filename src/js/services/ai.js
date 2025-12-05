@@ -170,6 +170,84 @@ export const getCoachAdvice = async (exerciseName, history, profile) => {
     }
 };
 
+export const analyzeShape = async (imageBase64) => {
+    // In production, use serverless function
+    if (!isLocalhost) {
+        try {
+            const response = await fetch('/api/ai', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'analyzeShape',
+                    data: { image: imageBase64 }
+                })
+            });
+
+            if (!response.ok) {
+                return null;
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Shape Analysis API Error:', error);
+            return null;
+        }
+    }
+
+    // Local development
+    const apiKey = localApiKey || localStorage.getItem('openai_api_key') || '';
+    if (!apiKey) return null;
+
+    try {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                model: 'gpt-4o-mini',
+                messages: [
+                    {
+                        role: 'user',
+                        content: [
+                            {
+                                type: 'text',
+                                text: `Analise este físico com foco em musculação.
+                                IMPORTANTE: Analise APENAS as partes do corpo que estão VISÍVEIS na foto.
+                                NÃO faça suposições sobre pernas ou costas se não estiverem aparecendo.
+                                
+                                Retorne APENAS um JSON válido:
+                                {
+                                    "bodyFat": "estimativa de % de gordura (ex: 15-18%)",
+                                    "strengths": "pontos fortes VISÍVEIS",
+                                    "weaknesses": "pontos a melhorar (apenas do que dá pra ver)",
+                                    "tip": "dica técnica específica para o que está na foto"
+                                }`
+                            },
+                            {
+                                type: 'image_url',
+                                image_url: {
+                                    url: imageBase64
+                                }
+                            }
+                        ]
+                    }
+                ],
+                max_tokens: 300,
+                response_format: { type: 'json_object' }
+            })
+        });
+
+        const data = await response.json();
+        if (data.error) return null;
+        return JSON.parse(data.choices[0].message.content);
+    } catch (error) {
+        console.error('Shape Analysis Error:', error);
+        return null;
+    }
+};
+
 export const analyzeWorkout = async (log, profile) => {
     // Simplified for now - returns null in production
     // Can be expanded later
