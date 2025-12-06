@@ -3,7 +3,7 @@ node_modules/
 
 # Environment (API Keys - NEVER COMMIT)
 .env
-src/js/env.js
+
 
 # Build output
 dist/
