@@ -3,7 +3,7 @@
  */
 
 const DB_NAME = 'WorkoutAppDB';
-const DB_VERSION = 4; // Incremented for Turbo features
+const DB_VERSION = 5; // Incremented for Nutrition (v5)
 
 let db = null;
 
@@ -59,7 +59,7 @@ const createObjectStores = (db) => {
         db.createObjectStore('profile', { keyPath: 'id' });
     }
 
-    // Nutrition Logs Store (New in v3)
+    // Nutrition Logs Store
     if (!db.objectStoreNames.contains('nutrition_logs')) {
         const nutritionStore = db.createObjectStore('nutrition_logs', { keyPath: 'id' });
         nutritionStore.createIndex('date', 'date', { unique: false });
@@ -215,6 +215,17 @@ export const remove = (storeName, id) => {
         const transaction = db.transaction([storeName], 'readwrite');
         const store = transaction.objectStore(storeName);
         const request = store.delete(id);
+
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
+};
+
+export const clearStore = (storeName) => {
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction([storeName], 'readwrite');
+        const store = transaction.objectStore(storeName);
+        const request = store.clear();
 
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error);

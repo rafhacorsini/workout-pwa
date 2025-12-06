@@ -2,6 +2,12 @@
  * Simple Router with Parameter Support
  */
 
+import { HomeView } from '../views/home-view.js';
+import { LibraryView } from '../views/library-view.js';
+import { WorkoutView } from '../views/workout-view.js';
+import { ProgressView } from '../views/progress-view.js';
+import { NutritionView } from '../views/nutrition-view.js';
+
 const routes = [];
 const appDiv = document.getElementById('app');
 
@@ -49,7 +55,6 @@ const handleRoute = async (path) => {
 
     if (!route) {
         // Fallback to home or 404
-        // For now, redirect to / if not found
         if (path !== '/') {
             navigate('/');
             return;
@@ -80,6 +85,13 @@ const handleRoute = async (path) => {
 };
 
 export const initRouter = () => {
+    // Register Routes directly here for simplicity in this architecture
+    registerRoute('/', HomeView);
+    registerRoute('/library', LibraryView);
+    registerRoute('/workout', WorkoutView);
+    registerRoute('/progress', ProgressView);
+    registerRoute('/nutrition', NutritionView);
+
     window.addEventListener('popstate', () => {
         handleRoute(window.location.pathname);
     });

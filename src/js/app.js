@@ -3,14 +3,14 @@
  */
 
 import { initDB } from '/src/js/core/db.js';
-import { initRouter, registerRoute } from '/src/js/core/router.js';
-import { HomeView } from '/src/js/views/home-view.js';
-import { LibraryView } from '/src/js/views/library-view.js';
-import { NutritionView } from '/src/js/views/nutrition-view.js';
+import { initRouter } from '/src/js/core/router.js';
 import { NavBar } from '/src/js/components/nav-bar.js';
 
+
 // Initialize App
-document.addEventListener('DOMContentLoaded', async () => {
+console.log('App Module execution started');
+
+const initApp = async () => {
     console.log('App Initializing...');
 
     try {
@@ -18,39 +18,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         await initDB();
         console.log('Database initialized');
 
-        // 2. Initialize Router
-        registerRoute('/', HomeView);
-        registerRoute('/library', LibraryView);
-        registerRoute('/nutrition', NutritionView);
-
-        // Dynamic Route for Workout
-        registerRoute('/workout/new', async () => {
-            const { WorkoutEditorView } = await import('/src/js/views/workout-editor-view.js');
-            return WorkoutEditorView();
-        });
-
-        registerRoute('/workout/edit/:id', async (params) => {
-            const { WorkoutEditorView } = await import('/src/js/views/workout-editor-view.js');
-            return WorkoutEditorView(params);
-        });
-
-        registerRoute('/workout/:id', async (params) => {
-            const { WorkoutView } = await import('/src/js/views/workout-view.js');
-            return WorkoutView(params.id);
-        });
-
-        registerRoute('/progress', async () => {
-            const { ProgressView } = await import('/src/js/views/progress-view.js');
-            return ProgressView();
-        });
-
+        // 2. Initialize Router (Routes are configured inside router.js)
         initRouter();
         console.log('Router initialized');
 
         // 3. Add Navigation Bar
         document.body.appendChild(NavBar());
+        console.log('NavBar added');
 
     } catch (error) {
         console.error('Failed to initialize app:', error);
     }
-});
+};
+
+// Run immediately (Modules are deferred by default)
+initApp();

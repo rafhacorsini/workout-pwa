@@ -22,17 +22,28 @@ export default async function handler(req, res) {
             const prompt = `
                 Analise esta refeição: "${data.mealText}".
                 
-                Estime os macronutrientes com base em porções padrão brasileiras.
-                Retorne APENAS um JSON válido:
+                Identifique os alimentos individuais e estime seus pesos (se não informado, use porção média brasileira).
+                Retorne APENAS um JSON válido neste formato exato para um app de dieta:
                 {
-                    "calories": 0,
-                    "protein": 0,
-                    "carbs": 0,
-                    "fats": 0,
-                    "foods": ["lista", "dos", "alimentos", "identificados"]
+                    "items": [
+                        { "name": "Nome do alimento", "weight": 0 (em gramas), "calories": 0 (kcal) },
+                        ...
+                    ],
+                    "total_calories": 0
                 }
             `;
             messages = [{ role: 'user', content: prompt }];
+
+        } else if (action === 'analyzeMealPhoto') {
+            messages = [
+                {
+                    role: 'user',
+                    content: [
+                        { type: 'text', text: 'Identifique os alimentos no prato e estime calorias/peso. Retorne JSON: { items: [{name, weight, calories}], total_calories }' },
+                        { type: 'image_url', image_url: { url: data.image } }
+                    ]
+                }
+            ];
 
         } else if (action === 'getCoachAdvice') {
             const historyText = data.history?.map(h => `${h.date}: ${h.weight}kg`).join('\n') || 'Sem histórico';

@@ -1,6 +1,9 @@
 import { getAll, put, getById } from '/src/js/core/db.js';
 import { navigate } from '/src/js/core/router.js';
 import { formatDate, calculateStreak } from '/src/js/core/utils.js';
+import { showAuthModal } from './auth-view.js';
+import { getCurrentUser } from '/src/js/services/supabase.js';
+import { syncData } from '/src/js/services/sync.js';
 import { config } from '/src/js/config.js';
 
 export const HomeView = async () => {
@@ -19,16 +22,28 @@ export const HomeView = async () => {
     const options = { weekday: 'long', month: 'long', day: 'numeric' };
     const dateStr = date.toLocaleDateString('pt-BR', options);
 
+    const user = await getCurrentUser();
+    const userName = user?.user_metadata?.full_name?.split(' ')[0] || 'Atleta';
+
     header.innerHTML = `
         <div>
             <div class="text-caption-1 text-secondary" style="text-transform: uppercase; letter-spacing: 0.5px;">${dateStr}</div>
-            <h1 class="text-title-1">Bom dia, Atleta</h1>
+            <h1 class="text-title-1">Bom dia, ${userName}</h1>
         </div>
-        <div style="width: 40px; height: 40px; background: var(--system-gray5); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+        <div id="profile-btn" style="width: 40px; height: 40px; background: var(--system-gray5); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer;">
              <i data-lucide="user" style="color: var(--accent-color);"></i>
+             ${user ? '<div style="position: absolute; width: 10px; height: 10px; background: var(--system-green); border-radius: 50%; border: 2px solid black; top: 2px; right: 2px;"></div>' : ''}
         </div>
     `;
     container.appendChild(header);
+
+    setTimeout(() => {
+        const btn = container.querySelector('#profile-btn');
+        if (btn) btn.addEventListener('click', showAuthModal);
+
+        // Auto Sync on Load
+        syncData();
+    }, 0);
 
     // API Key Check (Localhost only)
     if (!config.OPENAI_API_KEY && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {

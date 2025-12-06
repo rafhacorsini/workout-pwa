@@ -8,6 +8,47 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* Modals */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--bg-primary);
+    /* Solid background to hide home */
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Removed backdrop-filter since background is solid */
+}
+
+.modal-content {
+    background: var(--bg-secondary);
+    width: 90%;
+    max-width: 320px;
+    padding: 24px;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 225, 255, 0.1);
+    position: relative;
+    /* Animation */
+    animation: modal-pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes modal-pop {
+    0% {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
 /* Cards */
 .card {
     background-color: var(--bg-card);
@@ -37,6 +78,8 @@
     transition: all 0.2s var(--ease-apple);
     width: 100%;
     gap: 8px;
+    border: none;
+    cursor: pointer;
 }
 
 .btn:active {
@@ -53,6 +96,12 @@
 
 .btn-secondary {
     background-color: rgba(142, 142, 147, 0.12);
+    color: var(--accent-color);
+}
+
+.btn-outline {
+    background-color: transparent;
+    border: 1px solid var(--accent-color);
     color: var(--accent-color);
 }
 
@@ -107,11 +156,14 @@
     font-size: 17px;
     color: var(--text-primary);
     transition: background-color 0.2s;
+    border: 1px solid transparent;
+    /* Reset border */
 }
 
 .input-field:focus {
     background-color: rgba(142, 142, 147, 0.08);
     box-shadow: 0 0 0 2px var(--accent-color);
+    outline: none;
 }
 
 /* Navigation Bar (Floating) */
@@ -130,7 +182,8 @@
     align-items: center;
     justify-content: space-around;
     padding: 0 var(--spacing-sm);
-    box-shadow: var(--shadow-lg);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    /* Stronger shadow */
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -144,6 +197,8 @@
     border-radius: 50%;
     color: var(--text-secondary);
     transition: all 0.2s var(--ease-apple);
+    background: transparent;
+    border: none;
 }
 
 .nav-item.active {

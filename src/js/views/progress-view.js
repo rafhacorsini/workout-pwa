@@ -1,5 +1,7 @@
 import { getAll, add, remove } from '/src/js/core/db.js';
 import { formatDate, generateId } from '/src/js/core/utils.js';
+import { gateFeature, FEATURE } from '/src/js/services/monetization.js';
+import { showSubscriptionModal } from '/src/js/views/subscription-view.js';
 
 export const ProgressView = async () => {
     const container = document.createElement('div');
@@ -275,6 +277,13 @@ export const ProgressView = async () => {
         // Analyze Photo Logic
         document.querySelectorAll('.analyze-photo').forEach(btn => {
             btn.addEventListener('click', async (e) => {
+                // Feature Flag Check
+                const allowed = await gateFeature(FEATURE.AI_ANALYSIS);
+                if (!allowed) {
+                    showSubscriptionModal();
+                    return;
+                }
+
                 const id = e.currentTarget.dataset.id;
                 const photo = photos.find(p => p.id === id);
                 if (!photo) return;
