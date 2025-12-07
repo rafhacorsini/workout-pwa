@@ -5,6 +5,7 @@
 import { HomeView } from '../views/home-view.js';
 import { LibraryView } from '../views/library-view.js';
 import { WorkoutView } from '../views/workout-view.js';
+import { WorkoutEditorView } from '../views/workout-editor-view.js';
 import { ProgressView } from '../views/progress-view.js';
 import { NutritionView } from '../views/nutrition-view.js';
 
@@ -88,7 +89,8 @@ export const initRouter = () => {
     // Register Routes directly here for simplicity in this architecture
     registerRoute('/', HomeView);
     registerRoute('/library', LibraryView);
-    registerRoute('/workout', WorkoutView);
+    registerRoute('/workout/:id', WorkoutView);
+    registerRoute('/workout/edit/:id', WorkoutEditorView);
     registerRoute('/progress', ProgressView);
     registerRoute('/nutrition', NutritionView);
 
