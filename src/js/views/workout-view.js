@@ -3,7 +3,9 @@ import { navigate } from '/src/js/core/router.js';
 import { formatTime, generateId, formatDate } from '/src/js/core/utils.js';
 import { getCoachAdvice, analyzeWorkout } from '/src/js/services/ai.js';
 
-export const WorkoutView = async (workoutId) => {
+export const WorkoutView = async (params) => {
+    const workoutId = params?.id;
+
     const container = document.createElement('div');
     container.className = 'container slide-up';
     container.style.paddingBottom = '160px'; // Extra padding for bottom floaters
