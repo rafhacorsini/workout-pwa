@@ -1,17 +1,17 @@
-import { signInWithGoogle, signInWithEmail, signUpWithEmail, signOut, getCurrentUser } from '../services/supabase.js';
+import { signInWithGoogle, signInWithEmail, signUpWithEmail, signOut, getCurrentUser, resetPassword } from '../services/supabase.js';
 import { syncData } from '../services/sync.js';
 
 export const showAuthModal = async () => {
-                          const existingModal = document.getElementById('auth-modal');
-                          if (existingModal) existingModal.remove();
+    const existingModal = document.getElementById('auth-modal');
+    if (existingModal) existingModal.remove();
 
-                          const user = await getCurrentUser();
+    const user = await getCurrentUser();
 
-                          const modal = document.createElement('div');
-                          modal.id = 'auth-modal';
-                          modal.className = 'modal-overlay fade-in';
-                          modal.style.display = 'flex';
-                          modal.innerHTML = `
+    const modal = document.createElement('div');
+    modal.id = 'auth-modal';
+    modal.className = 'modal-overlay fade-in';
+    modal.style.display = 'flex';
+    modal.innerHTML = `
         <div class="modal-content" style="max-width: 320px; text-align: center;">
             <div style="display: flex; justify-content: flex-end; width: 100%;">
                 <i id="close-auth" data-lucide="x" style="cursor: pointer; color: var(--text-secondary);"></i>
@@ -43,6 +43,7 @@ export const showAuthModal = async () => {
                         <input type="email" id="email" class="input-field" placeholder="Email" required style="margin-bottom: 12px;">
                         <input type="password" id="password" class="input-field" placeholder="Senha" required style="margin-bottom: 16px;">
                         <button type="submit" class="btn btn-primary" style="width: 100%;">Entrar</button>
+                        <p id="forgot-password" class="text-caption-1 text-secondary" style="margin-top: 12px; cursor: pointer; text-decoration: underline;">Esqueci minha senha</p>
                     </form>
 
                     <form id="signup-form" style="display: none;">
@@ -65,89 +66,105 @@ export const showAuthModal = async () => {
         </div>
     `;
 
-                          document.body.appendChild(modal);
-                          if (window.lucide) window.lucide.createIcons();
+    document.body.appendChild(modal);
+    if (window.lucide) window.lucide.createIcons();
 
-                          // Close logic
-                          const closeBtn = modal.querySelector('#close-auth');
-                          closeBtn.addEventListener('click', () => modal.remove());
+    // Close logic
+    const closeBtn = modal.querySelector('#close-auth');
+    closeBtn.addEventListener('click', () => modal.remove());
 
-                          if (!user) {
-                                                    // Tab Logic
-                                                    const tabLogin = modal.querySelector('#tab-login');
-                                                    const tabSignup = modal.querySelector('#tab-signup');
-                                                    const loginForm = modal.querySelector('#login-form');
-                                                    const signupForm = modal.querySelector('#signup-form');
+    if (!user) {
+        // Tab Logic
+        const tabLogin = modal.querySelector('#tab-login');
+        const tabSignup = modal.querySelector('#tab-signup');
+        const loginForm = modal.querySelector('#login-form');
+        const signupForm = modal.querySelector('#signup-form');
 
-                                                    tabLogin.addEventListener('click', () => {
-                                                                              tabLogin.classList.add('active'); tabLogin.style.background = 'var(--bg-card)'; tabLogin.style.color = 'white';
-                                                                              tabSignup.classList.remove('active'); tabSignup.style.background = 'transparent'; tabSignup.style.color = 'var(--text-secondary)';
-                                                                              loginForm.style.display = 'block';
-                                                                              signupForm.style.display = 'none';
-                                                    });
+        tabLogin.addEventListener('click', () => {
+            tabLogin.classList.add('active'); tabLogin.style.background = 'var(--bg-card)'; tabLogin.style.color = 'white';
+            tabSignup.classList.remove('active'); tabSignup.style.background = 'transparent'; tabSignup.style.color = 'var(--text-secondary)';
+            loginForm.style.display = 'block';
+            signupForm.style.display = 'none';
+        });
 
-                                                    tabSignup.addEventListener('click', () => {
-                                                                              tabSignup.classList.add('active'); tabSignup.style.background = 'var(--bg-card)'; tabSignup.style.color = 'white';
-                                                                              tabLogin.classList.remove('active'); tabLogin.style.background = 'transparent'; tabLogin.style.color = 'var(--text-secondary)';
-                                                                              signupForm.style.display = 'block';
-                                                                              loginForm.style.display = 'none';
-                                                    });
+        tabSignup.addEventListener('click', () => {
+            tabSignup.classList.add('active'); tabSignup.style.background = 'var(--bg-card)'; tabSignup.style.color = 'white';
+            tabLogin.classList.remove('active'); tabLogin.style.background = 'transparent'; tabLogin.style.color = 'var(--text-secondary)';
+            signupForm.style.display = 'block';
+            loginForm.style.display = 'none';
+        });
 
-                                                    // Login Submit
-                                                    loginForm.addEventListener('submit', async (e) => {
-                                                                              e.preventDefault();
-                                                                              const email = modal.querySelector('#email').value;
-                                                                              const password = modal.querySelector('#password').value;
-                                                                              try {
-                                                                                                        const btn = loginForm.querySelector('button');
-                                                                                                        btn.textContent = 'Entrando...';
-                                                                                                        await signInWithEmail(email, password);
-                                                                                                        await syncData(); // Sync
-                                                                                                        modal.remove();
-                                                                                                        window.location.reload(); // Refresh to update UI
-                                                                              } catch (err) {
-                                                                                                        alert('Erro ao entrar: ' + err.message);
-                                                                              }
-                                                    });
+        // Login Submit
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = modal.querySelector('#email').value;
+            const password = modal.querySelector('#password').value;
+            try {
+                const btn = loginForm.querySelector('button');
+                btn.textContent = 'Entrando...';
+                await signInWithEmail(email, password);
+                await syncData(); // Sync
+                modal.remove();
+                window.location.reload(); // Refresh to update UI
+            } catch (err) {
+                alert('Erro ao entrar: ' + err.message);
+            }
+        });
 
-                                                    // Signup Submit
-                                                    signupForm.addEventListener('submit', async (e) => {
-                                                                              e.preventDefault();
-                                                                              const email = modal.querySelector('#new-email').value;
-                                                                              const password = modal.querySelector('#new-password').value;
-                                                                              const name = modal.querySelector('#new-name').value;
-                                                                              try {
-                                                                                                        const btn = signupForm.querySelector('button');
-                                                                                                        btn.textContent = 'Criando...';
-                                                                                                        await signUpWithEmail(email, password, name);
-                                                                                                        await syncData(); // Sync
-                                                                                                        alert('Conta criada! Verifique seu email para confirmar.');
-                                                                                                        modal.remove();
-                                                                              } catch (err) {
-                                                                                                        alert('Erro ao criar conta: ' + err.message);
-                                                                              }
-                                                    });
+        // Forgot Password
+        const forgotPasswordLink = modal.querySelector('#forgot-password');
+        forgotPasswordLink?.addEventListener('click', async () => {
+            const email = modal.querySelector('#email').value;
+            if (!email) {
+                alert('Digite seu email primeiro.');
+                return;
+            }
+            try {
+                await resetPassword(email);
+                alert('Email de recuperação enviado! Verifique sua caixa de entrada.');
+            } catch (err) {
+                alert('Erro: ' + err.message);
+            }
+        });
 
-                                                    // Google
-                                                    /*
-                                                    const googleBtn = modal.querySelector('#google-btn');
-                                                    if (googleBtn) {
-                                                        googleBtn.addEventListener('click', async () => {
-                                                            try {
-                                                                await signInWithGoogle();
-                                                            } catch (err) {
-                                                                alert('Erro Google: ' + err.message);
-                                                            }
-                                                        });
-                                                    }
-                                                    */
-                          } else {
-                                                    // Logout
-                                                    modal.querySelector('#sign-out-btn').addEventListener('click', async () => {
-                                                                              if (confirm('Tem certeza que deseja sair?')) {
-                                                                                                        await signOut();
-                                                                                                        window.location.reload();
-                                                                              }
-                                                    });
-                          }
+        // Signup Submit
+        signupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = modal.querySelector('#new-email').value;
+            const password = modal.querySelector('#new-password').value;
+            const name = modal.querySelector('#new-name').value;
+            try {
+                const btn = signupForm.querySelector('button');
+                btn.textContent = 'Criando...';
+                await signUpWithEmail(email, password, name);
+                await syncData(); // Sync
+                alert('Conta criada! Verifique seu email para confirmar.');
+                modal.remove();
+            } catch (err) {
+                alert('Erro ao criar conta: ' + err.message);
+            }
+        });
+
+        // Google
+        /*
+        const googleBtn = modal.querySelector('#google-btn');
+        if (googleBtn) {
+            googleBtn.addEventListener('click', async () => {
+                try {
+                    await signInWithGoogle();
+                } catch (err) {
+                    alert('Erro Google: ' + err.message);
+                }
+            });
+        }
+        */
+    } else {
+        // Logout
+        modal.querySelector('#sign-out-btn').addEventListener('click', async () => {
+            if (confirm('Tem certeza que deseja sair?')) {
+                await signOut();
+                window.location.reload();
+            }
+        });
+    }
 };
