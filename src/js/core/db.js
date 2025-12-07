@@ -3,7 +3,7 @@
  */
 
 const DB_NAME = 'WorkoutAppDB';
-const DB_VERSION = 5; // Incremented for Nutrition (v5)
+const DB_VERSION = 6; // Incremented for Nutrition (v5) -> Fixes (v6)
 
 let db = null;
 

@@ -269,12 +269,36 @@ export const HomeView = async () => {
                         ${new Date(log.date).toLocaleDateString('pt-BR', { weekday: 'long' })} • ${new Date(log.date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })}
                     </div>
                 </div>
-                <div style="text-align: right;">
-                    <div class="text-caption-2 text-secondary">Duração</div>
-                    <div class="text-subhead" style="font-family: var(--font-mono);">${log.duration}</div>
+                <div style="text-align: right; display: flex; align-items: center; gap: 12px;">
+                    <div>
+                        <div class="text-caption-2 text-secondary">Duração</div>
+                        <div class="text-subhead" style="font-family: var(--font-mono);">${log.duration}</div>
+                    </div>
+                    <button class="btn-icon delete-log-btn" data-id="${log.id}" style="width: 32px; height: 32px; color: var(--system-red); background: rgba(255, 59, 48, 0.1);">
+                        <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+                    </button>
                 </div>
             `;
             logCard.appendChild(cardHeader);
+
+            // Delete Logic
+            const deleteBtn = cardHeader.querySelector('.delete-log-btn');
+            deleteBtn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                if (confirm('Tem certeza que deseja apagar este treino?')) {
+                    try {
+                        // Dynamic import to avoid circular dependencies if any, though remove is in core/db
+                        const { remove } = await import('/src/js/core/db.js');
+                        await remove('logs', log.id);
+                        logCard.remove();
+                        // Optional: Refresh stats if needed, or just reload page for simplicity
+                        // window.location.reload(); 
+                        // Removing card is cleaner
+                    } catch (err) {
+                        alert('Erro ao apagar: ' + err.message);
+                    }
+                }
+            });
 
             // Exercises List
             const exercisesList = document.createElement('div');
