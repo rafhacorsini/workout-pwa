@@ -58,11 +58,37 @@ export const ProgressView = async () => {
     // 1. Weight Chart Section
     const weightHeader = document.createElement('div');
     weightHeader.className = 'section-header';
+    weightHeader.style.display = 'flex';
+    weightHeader.style.justifyContent = 'space-between';
+    weightHeader.style.alignItems = 'center';
     weightHeader.innerHTML = `
-        <h2 class="text-title-3">Peso Corporal</h2>
-        <i data-lucide="scale" style="color: var(--system-blue);"></i>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <h2 class="text-title-3">Peso Corporal</h2>
+            <i data-lucide="scale" style="color: var(--system-blue);"></i>
+        </div>
+        <button id="add-weight-btn" class="btn-icon" style="background: var(--accent-color); color: white; width: 32px; height: 32px; border-radius: 10px;">
+            <i data-lucide="plus"></i>
+        </button>
     `;
     container.appendChild(weightHeader);
+
+    // Quick Weight Input (Initially Hidden)
+    const quickWeightInput = document.createElement('div');
+    quickWeightInput.style.display = 'none';
+    quickWeightInput.style.marginBottom = '16px';
+    quickWeightInput.style.padding = '16px';
+    quickWeightInput.style.background = 'var(--bg-card)';
+    quickWeightInput.style.borderRadius = '12px';
+    quickWeightInput.style.gap = '12px';
+    quickWeightInput.style.alignItems = 'center';
+    quickWeightInput.innerHTML = `
+        <input type="number" id="quick-weight-value" class="input-field" placeholder="Ex: 75.5" style="flex: 1; text-align: center; font-size: 20px; font-weight: 600;">
+        <div style="display: flex; gap: 8px; margin-top: 12px;">
+            <button id="cancel-weight-btn" class="btn btn-secondary" style="flex: 1;">Cancelar</button>
+            <button id="save-weight-btn" class="btn btn-primary" style="flex: 1;">Salvar</button>
+        </div>
+    `;
+    container.appendChild(quickWeightInput);
 
     const weightCard = document.createElement('div');
     weightCard.className = 'card';
@@ -265,6 +291,44 @@ export const ProgressView = async () => {
     // Events
     setTimeout(() => {
         if (window.lucide) window.lucide.createIcons();
+
+        // Quick Weight Input Logic
+        const addWeightBtn = document.getElementById('add-weight-btn');
+        const cancelWeightBtn = document.getElementById('cancel-weight-btn');
+        const saveWeightBtn = document.getElementById('save-weight-btn');
+        const weightInput = document.getElementById('quick-weight-value');
+
+        addWeightBtn?.addEventListener('click', () => {
+            quickWeightInput.style.display = 'block';
+            weightInput?.focus();
+        });
+
+        cancelWeightBtn?.addEventListener('click', () => {
+            quickWeightInput.style.display = 'none';
+            if (weightInput) weightInput.value = '';
+        });
+
+        saveWeightBtn?.addEventListener('click', async () => {
+            const value = parseFloat(weightInput?.value);
+            if (!value || value < 20 || value > 300) {
+                alert('Digite um peso válido (entre 20 e 300 kg)');
+                return;
+            }
+
+            try {
+                await add('weight_history', {
+                    id: generateId(),
+                    date: new Date().toISOString(),
+                    weight: value
+                });
+                // Reload view
+                const app = document.getElementById('app');
+                app.innerHTML = '';
+                app.appendChild(await ProgressView());
+            } catch (err) {
+                alert('Erro ao salvar peso.');
+            }
+        });
 
         // Photo Upload Logic
         const addBtn = document.getElementById('add-photo-btn');

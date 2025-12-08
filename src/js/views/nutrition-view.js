@@ -126,8 +126,19 @@ export const NutritionView = async () => {
     loggerCard.className = 'card';
     loggerCard.style.marginBottom = '24px';
 
-    // Internal State for Builder
-    let builderItems = [];
+    // Internal State for Builder - Load from localStorage if exists
+    const NUTRITION_BUILDER_KEY = 'nutrition_builder_items';
+    let builderItems = JSON.parse(localStorage.getItem(NUTRITION_BUILDER_KEY) || '[]');
+
+    // Save builder items to localStorage
+    const saveBuilderItems = () => {
+        localStorage.setItem(NUTRITION_BUILDER_KEY, JSON.stringify(builderItems));
+    };
+
+    // Clear builder items from localStorage
+    const clearBuilderItems = () => {
+        localStorage.removeItem(NUTRITION_BUILDER_KEY);
+    };
 
     const renderBuilder = () => {
         const list = document.getElementById('builder-list');
@@ -162,6 +173,7 @@ export const NutritionView = async () => {
             btn.addEventListener('click', (e) => {
                 const idx = parseInt(e.currentTarget.dataset.index);
                 builderItems.splice(idx, 1);
+                saveBuilderItems(); // Persist change
                 renderBuilder();
             });
         });
@@ -326,6 +338,7 @@ export const NutritionView = async () => {
                         macros: { protein: 0, carbs: 0, fat: 0 }
                     });
                 });
+                saveBuilderItems(); // Persist AI items to localStorage
                 aiInput.value = '';
                 // Reset to camera
                 actionBtn.innerHTML = '<i data-lucide="camera" style="width: 22px;"></i>';
@@ -439,6 +452,7 @@ export const NutritionView = async () => {
                 calories: cals,
                 macros: { protein, carbs, fat }
             });
+            saveBuilderItems(); // Persist to localStorage
 
             // Clear inputs
             itemName.value = '';
@@ -474,6 +488,7 @@ export const NutritionView = async () => {
             };
 
             await add('nutrition_logs', mealLog);
+            clearBuilderItems(); // Clear saved items after successful save
 
             // Refresh
             const app = document.getElementById('app');

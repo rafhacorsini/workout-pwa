@@ -252,11 +252,110 @@ export const WorkoutView = async (params) => {
     restTimerPill.style.gap = '12px';
     restTimerPill.style.zIndex = '100';
     restTimerPill.style.transition = 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)'; // Spring effect
+    restTimerPill.style.cursor = 'pointer';
     restTimerPill.innerHTML = `
         <i data-lucide="hourglass" style="width: 20px; height: 20px;"></i>
         <span class="font-bold font-monospaced" id="rest-timer-val" style="font-size: 17px;">00:60</span>
     `;
     container.appendChild(restTimerPill);
+
+    // Configurable rest timer duration
+    let restDuration = parseInt(localStorage.getItem('rest_timer_duration') || '60');
+
+    // Create timer settings popup
+    const timerSettingsPopup = document.createElement('div');
+    timerSettingsPopup.style.position = 'fixed';
+    timerSettingsPopup.style.bottom = '110px';
+    timerSettingsPopup.style.left = '50%';
+    timerSettingsPopup.style.transform = 'translateX(-50%) scale(0.9)';
+    timerSettingsPopup.style.opacity = '0';
+    timerSettingsPopup.style.background = 'rgba(28, 28, 30, 0.95)';
+    timerSettingsPopup.style.backdropFilter = 'blur(20px)';
+    timerSettingsPopup.style.padding = '12px';
+    timerSettingsPopup.style.borderRadius = '16px';
+    timerSettingsPopup.style.display = 'none';
+    timerSettingsPopup.style.gap = '8px';
+    timerSettingsPopup.style.zIndex = '101';
+    timerSettingsPopup.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.4)';
+    timerSettingsPopup.style.border = '1px solid rgba(255,255,255,0.1)';
+    timerSettingsPopup.style.transition = 'all 0.3s ease';
+
+    const timerOptions = [45, 60, 90, 120];
+    timerSettingsPopup.innerHTML = timerOptions.map(sec => `
+        <button class="timer-option" data-seconds="${sec}" style="
+            padding: 8px 16px;
+            border-radius: 10px;
+            border: none;
+            background: ${sec === restDuration ? 'var(--accent-color)' : 'rgba(255,255,255,0.1)'};
+            color: ${sec === restDuration ? 'white' : 'var(--text-secondary)'};
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        ">${sec}s</button>
+    `).join('');
+    container.appendChild(timerSettingsPopup);
+
+    // Toggle timer settings on pill click
+    restTimerPill.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isVisible = timerSettingsPopup.style.display === 'flex';
+        if (isVisible) {
+            timerSettingsPopup.style.opacity = '0';
+            timerSettingsPopup.style.transform = 'translateX(-50%) scale(0.9)';
+            setTimeout(() => timerSettingsPopup.style.display = 'none', 300);
+        } else {
+            timerSettingsPopup.style.display = 'flex';
+            void timerSettingsPopup.offsetWidth;
+            timerSettingsPopup.style.opacity = '1';
+            timerSettingsPopup.style.transform = 'translateX(-50%) scale(1)';
+        }
+    });
+
+    // Timer option buttons
+    timerSettingsPopup.querySelectorAll('.timer-option').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const seconds = parseInt(btn.dataset.seconds);
+            restDuration = seconds;
+            localStorage.setItem('rest_timer_duration', seconds.toString());
+
+            // Update button styles
+            timerSettingsPopup.querySelectorAll('.timer-option').forEach(b => {
+                b.style.background = 'rgba(255,255,255,0.1)';
+                b.style.color = 'var(--text-secondary)';
+            });
+            btn.style.background = 'var(--accent-color)';
+            btn.style.color = 'white';
+
+            // Hide popup
+            timerSettingsPopup.style.opacity = '0';
+            timerSettingsPopup.style.transform = 'translateX(-50%) scale(0.9)';
+            setTimeout(() => timerSettingsPopup.style.display = 'none', 300);
+        });
+    });
+
+    // Play beep sound using Web Audio API
+    const playBeep = () => {
+        try {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.value = 880; // A5 note
+            oscillator.type = 'sine';
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.5);
+        } catch (e) {
+            console.log('Audio not supported');
+        }
+    };
 
     const startRestTimer = () => {
         clearInterval(restTimerInterval);
@@ -266,7 +365,7 @@ export const WorkoutView = async (params) => {
         restTimerPill.style.opacity = '1';
         restTimerPill.style.transform = 'translateX(-50%) scale(1) translateY(0)';
 
-        let timeLeft = 60;
+        let timeLeft = restDuration;
 
         const updateDisplay = () => {
             const mins = Math.floor(timeLeft / 60).toString().padStart(2, '0');
@@ -283,7 +382,9 @@ export const WorkoutView = async (params) => {
                 restTimerPill.style.transform = 'translateX(-50%) scale(0.9) translateY(20px)';
                 restTimerPill.style.opacity = '0';
                 setTimeout(() => restTimerPill.style.display = 'none', 500);
-                if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+                // Alert: vibration + sound
+                if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
+                playBeep();
             }
         }, 1000);
     };
