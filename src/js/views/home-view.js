@@ -127,6 +127,68 @@ export const HomeView = async () => {
     `;
     container.appendChild(gameCard);
 
+    // Training Calendar (GitHub-style contributions)
+    const calendarCard = document.createElement('div');
+    calendarCard.className = 'card';
+    calendarCard.style.marginBottom = 'var(--spacing-lg)';
+    calendarCard.style.padding = '16px';
+
+    // Generate last 28 days
+    const today = new Date();
+    const days = [];
+    for (let i = 27; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(today.getDate() - i);
+        days.push(date);
+    }
+
+    // Count workouts per day
+    const workoutsByDay = {};
+    logs.forEach(log => {
+        const dayKey = new Date(log.date).toDateString();
+        workoutsByDay[dayKey] = (workoutsByDay[dayKey] || 0) + 1;
+    });
+
+    // Day labels
+    const dayLabels = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+
+    calendarCard.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <div class="text-caption-1 text-secondary">ÚLTIMOS 28 DIAS</div>
+            <div style="display: flex; gap: 4px; align-items: center;">
+                <span class="text-caption-2 text-secondary">Menos</span>
+                <div style="width: 10px; height: 10px; background: rgba(52, 199, 89, 0.1); border-radius: 2px;"></div>
+                <div style="width: 10px; height: 10px; background: rgba(52, 199, 89, 0.4); border-radius: 2px;"></div>
+                <div style="width: 10px; height: 10px; background: rgba(52, 199, 89, 0.7); border-radius: 2px;"></div>
+                <div style="width: 10px; height: 10px; background: var(--system-green); border-radius: 2px;"></div>
+                <span class="text-caption-2 text-secondary">Mais</span>
+            </div>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;">
+            ${dayLabels.map(d => `<div class="text-caption-2 text-secondary" style="text-align: center; font-size: 9px; margin-bottom: 4px;">${d}</div>`).join('')}
+            ${days.map(date => {
+        const count = workoutsByDay[date.toDateString()] || 0;
+        const isToday = date.toDateString() === today.toDateString();
+        let bgColor = 'rgba(255,255,255,0.05)';
+        if (count === 1) bgColor = 'rgba(52, 199, 89, 0.3)';
+        if (count === 2) bgColor = 'rgba(52, 199, 89, 0.6)';
+        if (count >= 3) bgColor = 'var(--system-green)';
+        return `<div style="
+                    aspect-ratio: 1;
+                    background: ${bgColor};
+                    border-radius: 4px;
+                    border: ${isToday ? '2px solid var(--accent-color)' : 'none'};
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                " title="${date.toLocaleDateString('pt-BR')} - ${count} treino(s)">
+                    <span class="text-caption-2" style="font-size: 8px; color: ${count > 0 ? 'white' : 'var(--text-tertiary)'};">${date.getDate()}</span>
+                </div>`;
+    }).join('')}
+        </div>
+    `;
+    container.appendChild(calendarCard);
+
     // Goal Card
     let profile = await getById('profile', 'user');
     if (!profile) {
@@ -181,8 +243,37 @@ export const HomeView = async () => {
 
     container.appendChild(goalCard);
 
+    // Smart Workout Suggestion (based on history)
+    const workouts = await getAll('workouts');
+    const gymWorkouts = workouts.filter(w => w.type === 'gym');
 
-    // Start Workout Card
+    // Find which workout was done longest ago
+    let suggestedWorkout = null;
+    let longestAgo = 0;
+    let suggestion = '';
+
+    gymWorkouts.forEach(workout => {
+        const lastDone = logs
+            .filter(l => l.workoutId === workout.id)
+            .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+
+        if (!lastDone) {
+            // Never done this workout
+            if (!suggestedWorkout) {
+                suggestedWorkout = workout;
+                suggestion = `Você nunca fez ${workout.name}!`;
+            }
+        } else {
+            const daysAgo = Math.floor((new Date() - new Date(lastDone.date)) / (1000 * 60 * 60 * 24));
+            if (daysAgo > longestAgo) {
+                longestAgo = daysAgo;
+                suggestedWorkout = workout;
+                suggestion = `Você não faz há ${daysAgo} dia${daysAgo > 1 ? 's' : ''}`;
+            }
+        }
+    });
+
+    // Start Workout Card with Smart Suggestion
     const startCard = document.createElement('div');
     startCard.className = 'card';
     startCard.style.background = 'linear-gradient(135deg, var(--accent-color) 0%, #0055b3 100%)';
@@ -194,16 +285,33 @@ export const HomeView = async () => {
     startCard.style.cursor = 'pointer';
     startCard.style.boxShadow = '0 8px 16px rgba(0, 122, 255, 0.2)';
 
-    startCard.innerHTML = `
-        <div>
-            <h2 class="text-title-2" style="margin-bottom: 4px;">Começar Treino</h2>
-            <p class="text-body" style="opacity: 0.9;">Registrar atividade de hoje</p>
-        </div>
-        <div style="width: 48px; height: 48px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-            <i data-lucide="play" fill="white"></i>
-        </div>
-    `;
-    startCard.addEventListener('click', () => navigate('/library'));
+    if (suggestedWorkout) {
+        startCard.innerHTML = `
+            <div>
+                <div class="text-caption-2" style="opacity: 0.8; margin-bottom: 4px;">
+                    <i data-lucide="sparkles" style="width: 12px; display: inline-block; vertical-align: middle;"></i>
+                    SUGESTÃO DO COACH
+                </div>
+                <h2 class="text-title-2" style="margin-bottom: 4px;">${suggestedWorkout.name}</h2>
+                <p class="text-caption-1" style="opacity: 0.9;">${suggestion}</p>
+            </div>
+            <div style="width: 48px; height: 48px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i data-lucide="play" fill="white"></i>
+            </div>
+        `;
+        startCard.addEventListener('click', () => navigate(`/workout/${suggestedWorkout.id}`));
+    } else {
+        startCard.innerHTML = `
+            <div>
+                <h2 class="text-title-2" style="margin-bottom: 4px;">Começar Treino</h2>
+                <p class="text-body" style="opacity: 0.9;">Registrar atividade de hoje</p>
+            </div>
+            <div style="width: 48px; height: 48px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i data-lucide="play" fill="white"></i>
+            </div>
+        `;
+        startCard.addEventListener('click', () => navigate('/library'));
+    }
     container.appendChild(startCard);
 
     // Weekly Feed (Detailed)
