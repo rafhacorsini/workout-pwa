@@ -148,6 +148,7 @@ export const NutritionView = async () => {
                 <div class="text-caption-1">${item.name} <span class="text-secondary">(${item.weight}g)</span></div>
                 <div style="display: flex; gap: 8px; align-items: center;">
                     <div class="text-caption-1">${item.calories} kcal</div>
+                    <div class="text-caption-1">P:${item.macros.protein}g C:${item.macros.carbs}g G:${item.macros.fat}g</div>
                     <i data-index="${index}" class="remove-item" data-lucide="x-circle" style="width: 14px; color: var(--system-red); cursor: pointer;"></i>
                 </div>
             `;
@@ -204,6 +205,20 @@ export const NutritionView = async () => {
             <div style="margin-bottom: 4px;">
                  <label class="text-caption-1 text-secondary">PESO (g)</label>
                  <input type="number" id="item-weight" class="input-field" placeholder="0" style="width: 100%;">
+            </div>
+            <div style="margin-bottom: 4px; display: flex; gap: 8px;">
+                <div style="flex:1;">
+                    <label class="text-caption-1 text-secondary">PROTEÍNA (g)</label>
+                    <input type="number" id="item-protein" class="input-field" placeholder="0" style="width: 100%;">
+                </div>
+                <div style="flex:1;">
+                    <label class="text-caption-1 text-secondary">CARBO (g)</label>
+                    <input type="number" id="item-carbs" class="input-field" placeholder="0" style="width: 100%;">
+                </div>
+                <div style="flex:1;">
+                    <label class="text-caption-1 text-secondary">GORDURA (g)</label>
+                    <input type="number" id="item-fat" class="input-field" placeholder="0" style="width: 100%;">
+                </div>
             </div>
 
             <button id="add-item-btn" class="btn btn-outline" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
@@ -295,6 +310,11 @@ export const NutritionView = async () => {
         const aiInput = document.getElementById('ai-input');
         const actionBtn = document.getElementById('ai-action-btn');
         const cameraInput = document.getElementById('ai-camera-input');
+        // Ensure attributes for mobile camera capture
+        if (cameraInput) {
+            cameraInput.setAttribute('accept', 'image/*');
+            cameraInput.setAttribute('capture', 'environment');
+        }
 
         const handleAIResult = (result) => {
             if (result && result.items) {
@@ -353,7 +373,11 @@ export const NutritionView = async () => {
                 if (window.lucide) window.lucide.createIcons();
             } else {
                 // CAMERA MODE
+                // Temporarily make the hidden file input visible to trigger camera on mobile
+                const prevDisplay = cameraInput.style.display;
+                cameraInput.style.display = 'block';
                 cameraInput.click();
+                cameraInput.style.display = prevDisplay;
             }
         });
 
@@ -406,11 +430,14 @@ export const NutritionView = async () => {
             else if (n.includes('aveia')) cals = Math.round(weight * 3.8);
             else cals = Math.round(weight * 2);
 
+            const protein = parseFloat(document.getElementById('item-protein').value) || 0;
+            const carbs = parseFloat(document.getElementById('item-carbs').value) || 0;
+            const fat = parseFloat(document.getElementById('item-fat').value) || 0;
             builderItems.push({
                 name,
                 weight,
                 calories: cals,
-                macros: { protein: 0, carbs: 0, fat: 0 }
+                macros: { protein, carbs, fat }
             });
 
             // Clear inputs
