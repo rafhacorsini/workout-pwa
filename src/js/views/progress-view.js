@@ -2,6 +2,8 @@ import { getAll, add, remove } from '/src/js/core/db.js';
 import { formatDate, generateId } from '/src/js/core/utils.js';
 import { gateFeature, FEATURE } from '/src/js/services/monetization.js';
 import { showSubscriptionModal } from '/src/js/views/subscription-view.js';
+import { MuscleHeatmap } from '/src/js/components/muscle-heatmap.js';
+import { calculateMuscleVolume, getBest1RM } from '/src/js/services/analytics.js';
 
 export const ProgressView = async () => {
     const container = document.createElement('div');
@@ -12,6 +14,46 @@ export const ProgressView = async () => {
     header.className = 'section-header';
     header.innerHTML = `<h1 class="text-large-title">Evolução</h1>`;
     container.appendChild(header);
+
+    // Fetch Common Data
+    let logs = [];
+    try {
+        logs = await getAll('logs');
+    } catch (e) {
+        console.log('Error fetching logs');
+    }
+
+    // 0. Muscle Heatmap (NEW)
+    const volumeData = calculateMuscleVolume(logs);
+    container.appendChild(MuscleHeatmap(volumeData));
+
+    // 0.5 1RM Stats (NEW)
+    const statsContainer = document.createElement('div');
+    statsContainer.style.display = 'grid';
+    statsContainer.style.gridTemplateColumns = '1fr 1fr 1fr';
+    statsContainer.style.gap = '8px';
+    statsContainer.style.marginTop = '16px';
+    statsContainer.style.marginBottom = '24px';
+
+    const big3 = [
+        { id: 'bench_press', label: 'Supino', icon: 'activity' },
+        { id: 'squat', label: 'Agach.', icon: 'move' },
+        { id: 'deadlift', label: 'Terra', icon: 'anchor' }
+    ];
+
+    big3.forEach(lift => {
+        const pr = getBest1RM(logs, lift.id);
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.style.padding = '12px';
+        card.style.textAlign = 'center';
+        card.innerHTML = `
+            <div class="text-caption-2 text-secondary" style="margin-bottom: 4px;">${lift.label}</div>
+            <div class="text-headline" style="color: var(--accent-color);">${pr > 0 ? pr : '-'} <span style="font-size: 12px; color: var(--text-secondary);">kg</span></div>
+        `;
+        statsContainer.appendChild(card);
+    });
+    container.appendChild(statsContainer);
 
     // 1. Weight Chart Section
     const weightHeader = document.createElement('div');
@@ -195,33 +237,28 @@ export const ProgressView = async () => {
     const list = document.createElement('div');
     list.className = 'list-group';
 
-    try {
-        const logs = await getAll('logs');
-        if (logs.length === 0) {
-            list.innerHTML = `
-                <div class="list-item" style="justify-content: center; padding: 32px;">
-                    <span class="text-secondary">Nenhum treino registrado ainda.</span>
-                </div>
-            `;
-        } else {
-            logs.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(log => {
-                const item = document.createElement('div');
-                item.className = 'list-item';
-                item.innerHTML = `
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--system-green);"></div>
-                        <div>
-                            <div class="text-body font-semibold">${log.workoutName}</div>
-                            <div class="text-caption-1 text-secondary">${new Date(log.date).toLocaleDateString()}</div>
-                        </div>
+    if (logs.length === 0) {
+        list.innerHTML = `
+            <div class="list-item" style="justify-content: center; padding: 32px;">
+                <span class="text-secondary">Nenhum treino registrado ainda.</span>
+            </div>
+        `;
+    } else {
+        logs.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(log => {
+            const item = document.createElement('div');
+            item.className = 'list-item';
+            item.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--system-green);"></div>
+                    <div>
+                        <div class="text-body font-semibold">${log.workoutName}</div>
+                        <div class="text-caption-1 text-secondary">${new Date(log.date).toLocaleDateString()}</div>
                     </div>
-                    <div class="text-callout font-monospaced text-secondary">${log.duration || '-'}</div>
-                `;
-                list.appendChild(item);
-            });
-        }
-    } catch (e) {
-        console.log('Error loading logs');
+                </div>
+                <div class="text-callout font-monospaced text-secondary">${log.duration || '-'}</div>
+            `;
+            list.appendChild(item);
+        });
     }
     container.appendChild(list);
 
