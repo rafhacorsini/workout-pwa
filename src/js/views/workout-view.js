@@ -20,6 +20,47 @@ export const WorkoutView = async (params) => {
     let logData = {};
     let restTimerInterval;
 
+    // Persistence: Storage key for this workout session
+    const STORAGE_KEY = `workout_in_progress_${workoutId}`;
+
+    // Save current workout state to localStorage
+    const saveWorkoutState = () => {
+        const state = {
+            workoutId,
+            startTime,
+            selectedGymId,
+            logData
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    };
+
+    // Load workout state from localStorage (returns true if restored)
+    const loadWorkoutState = () => {
+        try {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                const state = JSON.parse(saved);
+                if (state.workoutId === workoutId) {
+                    startTime = state.startTime;
+                    selectedGymId = state.selectedGymId || 'blue-fit';
+                    logData = state.logData || {};
+                    return true;
+                }
+            }
+        } catch (e) {
+            console.error('Error loading workout state:', e);
+        }
+        return false;
+    };
+
+    // Clear saved state (called when workout is finished)
+    const clearWorkoutState = () => {
+        localStorage.removeItem(STORAGE_KEY);
+    };
+
+    // Try to restore previous session
+    const wasRestored = loadWorkoutState();
+
     try {
         workout = await getById('workouts', workoutId);
         gyms = await getAll('gyms');
@@ -499,6 +540,27 @@ export const WorkoutView = async (params) => {
             checkBtn.style.transition = 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'; // Bouncy
             checkBtn.innerHTML = `<i data-lucide="check" style="width: 20px;"></i>`;
 
+            // Restore saved set data if exists
+            const savedSet = logData[ex.name]?.sets?.[i];
+            if (savedSet) {
+                kgInput.value = savedSet.weight || '';
+                repsInput.value = savedSet.reps || '';
+                checkBtn.style.background = 'var(--system-green)';
+                checkBtn.style.color = 'white';
+            }
+
+            // Save state on input change
+            const saveOnChange = () => {
+                if (!logData[ex.name].sets[i]) {
+                    logData[ex.name].sets[i] = {};
+                }
+                logData[ex.name].sets[i].weight = kgInput.value;
+                logData[ex.name].sets[i].reps = repsInput.value;
+                saveWorkoutState();
+            };
+            kgInput.addEventListener('blur', saveOnChange);
+            repsInput.addEventListener('blur', saveOnChange);
+
             checkBtn.addEventListener('click', () => {
                 const isChecked = checkBtn.style.background === 'var(--system-green)';
                 if (!isChecked) {
@@ -507,10 +569,13 @@ export const WorkoutView = async (params) => {
                     checkBtn.style.background = 'var(--system-green)';
                     checkBtn.style.color = 'white';
                     logData[ex.name].sets[i] = { weight: kgInput.value, reps: repsInput.value };
+                    saveWorkoutState();
                     startRestTimer();
                 } else {
                     checkBtn.style.background = 'rgba(255, 255, 255, 0.1)';
                     checkBtn.style.color = 'var(--text-secondary)';
+                    delete logData[ex.name].sets[i];
+                    saveWorkoutState();
                 }
             });
 
@@ -755,6 +820,7 @@ export const WorkoutView = async (params) => {
             data: logData
         };
         await add('logs', log);
+        clearWorkoutState(); // Clear saved state after finishing
         showSummary(log);
     };
 
